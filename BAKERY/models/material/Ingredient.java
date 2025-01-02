@@ -7,7 +7,7 @@ import java.util.List;
 import connexion.Connexion;
 
 public class Ingredient {
-    private int id_ingerdient;
+    private int id_ingredient;
     private String name_ingredient;
     private int id_unit; 
     private double stock;
@@ -15,8 +15,8 @@ public class Ingredient {
 
     public Ingredient(){
     }
-    public Ingredient(int id_ingerdient,String name_ingredient,int id_unit,double stock,Date last_update){
-        this.id_ingerdient=id_ingerdient;
+    public Ingredient(int id_ingredient,String name_ingredient,int id_unit,double stock,Date last_update){
+        this.id_ingredient=id_ingredient;
         this.name_ingredient=name_ingredient;
         this.id_unit=id_unit;
         this.stock=stock;
@@ -25,7 +25,7 @@ public class Ingredient {
 ///     Getteur
     //      getteur classique
     public int getIdIngredient(){
-        return this.id_ingerdient;
+        return this.id_ingredient;
     }
     public String getName(){
         return this.name_ingredient;
@@ -51,7 +51,7 @@ public class Ingredient {
         }
     }
     //      getteur by id
-    public void getById(int id_ingerdient) throws Exception{
+    public void getById(int id_ingredient) throws Exception{
         Connection connection=null;
         String query="SELECT * FROM bakery_ingredients WHERE id_ingredient = ?";
         PreparedStatement preparedStatement = null;
@@ -59,7 +59,7 @@ public class Ingredient {
         try {
             connection = Connexion.connectePostgres();
             preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setInt(1, id_ingerdient);
+            preparedStatement.setInt(1, id_ingredient);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 setIdIngredient(resultSet.getInt("id_ingredient"));
@@ -73,12 +73,16 @@ public class Ingredient {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
+        } finally {
+            if (null!=resultSet) resultSet.close();
+            if (null!=preparedStatement) preparedStatement.close();
+            if (null!=connection) connection.close();
         }
     }
 
 ///     Setteur
-    public void setIdIngredient(int id_ingerdient){
-        this.id_ingerdient=id_ingerdient;
+    public void setIdIngredient(int id_ingredient){
+        this.id_ingredient=id_ingredient;
     }
     public void setName(String name_ingredient){
         this.name_ingredient=name_ingredient;
@@ -102,7 +106,7 @@ public class Ingredient {
         retour+="\t\t<td>"+stock+"</td>\n";
         retour+="\t\t<td>"+getUnit().getName()+"</td>\n";
         retour+="\t\t<td>"+last_update+"</td>\n";
-        retour+="\t\t<td><a href=\"Ingredient?action=update&idIngredient="+id_ingerdient+"\">update<a> <a href=\"Ingredient?action=delete&idIngredient="+id_ingerdient+"\">delete<a></td>\n";
+        retour+="\t\t<td><a href=\"Ingredient?action=update&id_ingredient="+id_ingredient+"\">update<a> <a href=\"Ingredient?action=delete&id_ingredient="+id_ingredient+"\">delete<a></td>\n";
         retour+="\t</tr>\n";
 
         return retour;   
@@ -135,7 +139,7 @@ public class Ingredient {
             preparedStatement.setString(1, name_ingredient);
             preparedStatement.setInt(2, id_unit);
             preparedStatement.setDouble(3, stock);
-            preparedStatement.setInt(4, id_ingerdient);
+            preparedStatement.setInt(4, id_ingredient);
             preparedStatement.executeUpdate();
             preparedStatement.close();
         } catch (Exception e ){
@@ -147,7 +151,7 @@ public class Ingredient {
     public void delete(Connection co)throws Exception{
         String query = "DELETE FROM bakery_ingredients WHERE id_ingredient = ?";
         try (PreparedStatement preparedStatement = co.prepareStatement(query)){
-            preparedStatement.setInt(1, id_ingerdient);
+            preparedStatement.setInt(1, id_ingredient);
 
             preparedStatement.executeUpdate();
             preparedStatement.close();
@@ -176,14 +180,14 @@ public class Ingredient {
             resultSet = statement.executeQuery(query);
             // recuperation des informations et creation de tous les objets
             while (resultSet.next()) {
-                int id_ingerdient = resultSet.getInt("id_ingredient");
+                int id_ingredient = resultSet.getInt("id_ingredient");
                 String name_ingredient = resultSet.getString("name_ingredient");
                 int id_unit = resultSet.getInt("id_unit");
                 double stock = resultSet.getDouble("stock");
                 Date last_update = resultSet.getDate("last_update");
 
             // je voulais pas utiliser le getById car je ne veux pas re-rentrer dans la base
-                Ingredient ingredient = new Ingredient(id_ingerdient, name_ingredient, id_unit,stock, last_update);
+                Ingredient ingredient = new Ingredient(id_ingredient, name_ingredient, id_unit,stock, last_update);
                 retour.add(ingredient);
             }
 

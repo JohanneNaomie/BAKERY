@@ -29,7 +29,7 @@
             %>
         </select><br><br>
         <label for="stock">stock: </label>
-        <input type="number" name="stock" id="stock" value="<% out.print(ingredient.getStock()); %>">
+        <input type="number" step="0.01" name="stock" id="stock" value="<% out.print(ingredient.getStock()); %>">
 
         
         <button type="submit">Update Ingredient</button>

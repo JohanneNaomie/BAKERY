@@ -48,7 +48,7 @@
             %>
         </select><br><br>
         <label for="stock">stock: </label>
-        <input type="number" name="stock" id="stock">
+        <input type="number" step="0.01" name="stock" id="stock">
 
         
         <button type="submit">Insert Ingredient</button>

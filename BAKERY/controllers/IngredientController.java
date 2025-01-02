@@ -49,9 +49,9 @@ public class IngredientController extends HttpServlet{
 
                     ingredient.save(connection);
 
-                    response.getWriter().print("<p>Insert Ingredient successful</p>");
+                    
                 } catch (Exception e) {
-                    response.getWriter().print("<p>"+e.getMessage()+"</p>");
+                    e.printStackTrace();
                     
                 } finally {
                     if ( null != connection ) {
@@ -61,6 +61,7 @@ public class IngredientController extends HttpServlet{
                             e.printStackTrace();
                         }
                     }
+                    response.sendRedirect("Ingredient?action=liste");
                 }
         }
         else if (    
@@ -84,7 +85,6 @@ public class IngredientController extends HttpServlet{
 
                     ingredient.update(connection);
 
-                    response.getWriter().print("<p>update Ingredient successful</p>");
                 } catch (Exception e) {
                     response.getWriter().print("<p>"+e.getMessage()+"</p>");
                     
@@ -96,6 +96,7 @@ public class IngredientController extends HttpServlet{
                             e.printStackTrace();
                         }
                     }
+                    response.sendRedirect("Ingredient?action=liste");
                 }
         }
 
@@ -104,7 +105,7 @@ public class IngredientController extends HttpServlet{
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
-        String id_ingredient = request.getParameter("idIngredient");
+        String id_ingredient = request.getParameter("id_ingredient");
         if(null != action && action.equals("pageInsert")){
             RequestDispatcher dispat = request.getRequestDispatcher("/WEB-INF/views/insertIngredient.jsp");
             List<Unit> units = null;
@@ -121,9 +122,7 @@ public class IngredientController extends HttpServlet{
         }
         /// delete
         else if (null != action && action.equals("delete") && null !=id_ingredient && !id_ingredient.isEmpty()) {
-            RequestDispatcher dispat = request.getRequestDispatcher("/WEB-INF/views/listIngredient.jsp");
-            List<Ingredient> ingredients = null;
-            String error = "";
+            
             try {
                 //  suppresion
                 int id_ing=Integer.parseInt(id_ingredient);
@@ -135,18 +134,9 @@ public class IngredientController extends HttpServlet{
                 
             } catch (Exception e) {
                 e.printStackTrace();
-                error = e.getMessage();
+            
             }
-            try {
-                
-                ingredients=Ingredient.getAll();
-                request.setAttribute("ingredients", ingredients);
-            } catch (Exception e) {
-                e.printStackTrace();
-                error+="<br>"+e.getMessage();
-            }
-            request.setAttribute("error", error);
-            dispat.forward(request, response);
+            response.sendRedirect("Ingredient?action=liste");
         }
         else if (null != action && action.equals("update") && null !=id_ingredient && !id_ingredient.isEmpty()){
             RequestDispatcher dispat = request.getRequestDispatcher("/WEB-INF/views/updateIngredient.jsp");
