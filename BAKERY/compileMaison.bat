@@ -1,0 +1,1 @@
+javac -cp lib/* -d class models/connexion/*.java models/material/*.java models/main/*.java controllers/*.java
