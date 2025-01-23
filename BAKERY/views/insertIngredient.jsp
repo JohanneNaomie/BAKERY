@@ -4,55 +4,93 @@
 
     List<Unit> units = (List<Unit>) request.getAttribute("units");
 %>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Insert Block</title>
-    <style>
-        /* Style for typewriter effect */
-        .typewriter {
-            font-family: monospace;
-            display: inline-block;
-            border-right: 2px solid black;
-            white-space: nowrap;
-            overflow: hidden;
-            width: 100%;
-            animation: typing 3s steps(40, end), blink-caret 0.5s step-end infinite;
-        }
 
-        @keyframes typing {
-            from { width: 0; }
-            to { width: 100%; }
-        }
 
-        @keyframes blink-caret {
-            from, to { border-color: transparent; }
-            50% { border-color: black; }
-        }
-    </style>
-</head>
-<body>
-    <h1>Insert a New Ingredient</h1>
-    <form action="Ingredient" method="post">
-        <input type="hidden" name="action" value="insert">
 
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required><br><br>
+<%@ include file="sideBar.jsp" %>
 
-        <label for="unit">unit: </label>
-        <select name="unit" id="unit">
-            <%
-                for (Unit unit : units) {
-                    out.print(unit.option());
-                } 
-            %>
-        </select><br><br>
-        <label for="stock">stock: </label>
-        <input type="number" step="0.01" name="stock" id="stock">
 
-        
-        <button type="submit">Insert Ingredient</button>
-    </form>
 
-</body>
-</html>
+
+<div class="main-panel">
+    <div class="content">
+        <div class="page-inner">
+            <div class="page-header">
+                <h4 class="page-title">Ingredient</h4>
+                <ul class="breadcrumbs">
+                    <li class="nav-home">
+                        <a href="#">
+                            <i class="flaticon-home"></i>
+                        </a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a href="Ingredient?action=liste#multi-filter-select">Multi filter</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a href="Ingredient?action=liste#add-row">Update Delete</a>
+                    </li>
+                    <li class="separator">
+                        <i class="flaticon-right-arrow"></i>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#">Insertion</a>
+                    </li>
+                    
+                </ul>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                   <div class="card">
+                       <div class="card-header">
+                           <div class="d-flex align-items-center">
+                               <h4 class="card-title">Insertion Ingredient</h4>
+                           </div>
+                       </div>
+                       <div class="card-body">
+                            <form action="Ingredient" method="post">
+                                <input type="hidden" name="action" value="insert">
+                                <div class="form-group">
+                                    <label for="name">Name</label>
+                                    <input type="text" id="name" name="name" class="form-control input-square" required placeholder="name">
+                            
+                                </div>
+                                
+                                <div class="form-group">
+
+                                    <label for="unit">Unit </label>
+                                    <select name="unit" id="unit" class="form-control input-square">
+                                        <%
+                                            for (Unit unit : units) {
+                                                out.print(unit.option());
+                                            } 
+                                        %>
+                                    </select>
+                                </div>
+                                    <input type="hidden" step="0.01" value="0" class="form-control input-square" name="stock" id="stock">
+                                
+                                <div class="form-control">
+
+                                    <label for="price">Price </label>
+                                    <input type="number" step="0.001" class="form-control input-square" name="price" id="price">
+                                    
+                                </div>
+                        
+                                <input type="submit" value="valider" class="btn btn-primary btn-round">
+                           </form>         
+                       </div>
+                   </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+</div>
+<%@ include file="custom.jsp" %>
+

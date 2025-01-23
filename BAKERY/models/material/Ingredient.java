@@ -12,6 +12,7 @@ public class Ingredient {
     private int id_unit; 
     private double stock;
     private Date last_update;
+    private double price;
 
     public Ingredient(){
     }
@@ -21,6 +22,16 @@ public class Ingredient {
         this.id_unit=id_unit;
         this.stock=stock;
         this.last_update=last_update;
+        this.price=0;
+    }   
+    
+    public Ingredient(int id_ingredient,String name_ingredient,int id_unit,double stock,Date last_update,double price){
+        this.id_ingredient=id_ingredient;
+        this.name_ingredient=name_ingredient;
+        this.id_unit=id_unit;
+        this.stock=stock;
+        this.last_update=last_update;
+        this.price=price;
     }   
 ///     Getteur
     //      getteur classique
@@ -39,10 +50,12 @@ public class Ingredient {
     public Date getLastUpdate(){
         return this.last_update;
     }
+    public double getPrice(){
+        return this.price;
+    }
     //      getteur entrer dans base
     public Unit getUnit(){
         try {
-            
             Unit unit = new Unit();
             unit.getById(id_unit);
             return unit;
@@ -67,6 +80,7 @@ public class Ingredient {
                 setIdUnit(resultSet.getInt("id_unit"));
                 setStock(resultSet.getDouble("stock"));
                 setLastUpdate(resultSet.getDate("last_update"));
+                setPrice();
             }else {
                 throw new Exception("Ingredient inexistant");
             }
@@ -96,18 +110,68 @@ public class Ingredient {
     public void setLastUpdate(Date last_update){
         this.last_update=last_update;
     }
+    public void setPrice(double price){
+        this.price=price;
+    }
+    //      setteur avec connection
+    public void setIdIngredient()throws Exception{
+        Connection connection=null;
+        String query="SELECT max(id_ingredient) as id_ingredient FROM bakery_ingredients";
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = Connexion.connectePostgres();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(query);
+            if (resultSet.next()) {
+                setIdIngredient(resultSet.getInt(1));
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (null!=resultSet) resultSet.close();
+            if (null!=statement) statement.close();
+            if (null!=connection) connection.close(); 
+        }
+    }
+    
+    public void setPrice() throws Exception{
+        Connection connection = null;
+        String query="SELECT * FROM bakery_ingredient_prices WHERE id_ingredient = ? order by date_time desc";
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = Connexion.connectePostgres();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setInt(1, id_ingredient);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()){
+                setPrice(resultSet.getDouble("price"));
+            } else {
+                setPrice(0);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            if (null!=resultSet) resultSet.close();
+            if (null!=preparedStatement) preparedStatement.close();
+            if (null!=connection) connection.close();  
+        }
+    }
 
 
 ///     affichage
     public String line() {
-        String retour="\t<tr>\n";
+        String retour="";
 
         retour+="\t\t<td>"+name_ingredient+"</td>\n";
         retour+="\t\t<td>"+stock+"</td>\n";
         retour+="\t\t<td>"+getUnit().getName()+"</td>\n";
         retour+="\t\t<td>"+last_update+"</td>\n";
-        retour+="\t\t<td><a href=\"Ingredient?action=update&id_ingredient="+id_ingredient+"\">update<a> <a href=\"Ingredient?action=delete&id_ingredient="+id_ingredient+"\">delete<a></td>\n";
-        retour+="\t</tr>\n";
+        retour+="\t\t<td>"+price+"</td>\n";
+        // retour+="\t\t<td><a href=\"Ingredient?action=update&id_ingredient="+id_ingredient+"\">update<a> <a href=\"Ingredient?action=delete&id_ingredient="+id_ingredient+"\">delete<a></td>\n";
+        // retour+="\t</tr>\n";
 
         return retour;   
     }
@@ -122,6 +186,23 @@ public class Ingredient {
             preparedStatement.setString(1, name_ingredient);
             preparedStatement.setInt(2, id_unit);
             preparedStatement.setDouble(3, stock);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+            setIdIngredient();
+
+        } catch (Exception e ){
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    public void savePrice(Connection co )throws Exception{
+        String query = "INSERT INTO bakery_ingredient_prices (id_ingredient, price) VALUES (? , ?)";
+
+        try(PreparedStatement preparedStatement = co.prepareStatement(query)){
+
+            preparedStatement.setInt(1, id_ingredient);
+            preparedStatement.setDouble(2, price);
 
             preparedStatement.executeUpdate();
             preparedStatement.close();
@@ -148,6 +229,28 @@ public class Ingredient {
         }
     }
 ///     delete 
+    public void delete ()throws Exception {
+        Connection connection = null;
+        try {
+            connection = Connexion.connectePostgres();
+            connection.setAutoCommit(false);
+            // deleteMoveStock(connection);
+            deleteCompositionProduct(connection);
+            deletePrice(connection);
+            delete(connection);
+            connection.commit();
+        } catch (Exception e){
+            try {
+                connection.rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw ex;
+            }
+            throw e;
+        } finally {
+            if (null!=connection) connection.close();
+        }
+    }
     public void delete(Connection co)throws Exception{
         String query = "DELETE FROM bakery_ingredients WHERE id_ingredient = ?";
         try (PreparedStatement preparedStatement = co.prepareStatement(query)){
@@ -160,6 +263,44 @@ public class Ingredient {
             throw e;
         }
     }
+    public void deletePrice(Connection co)throws Exception {
+        String query = "DELETE FROM bakery_ingredient_prices WHERE id_ingredient = ?";
+        try (PreparedStatement preparedStatement = co.prepareStatement(query)){
+            preparedStatement.setInt(1, id_ingredient);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    public void deleteCompositionProduct(Connection co)throws Exception {
+        String query = "DELETE FROM bakery_composition_products WHERE id_ingredient = ?";
+        try (PreparedStatement preparedStatement = co.prepareStatement(query)){
+            preparedStatement.setInt(1, id_ingredient);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+///     LA TABLE N'EXISTE PLUS
+    // public void deleteMoveStock(Connection co)throws Exception {
+    //     String query = "DELETE FROM bakery_move_stocks WHERE id_ingredient = ?";
+    //     try (PreparedStatement preparedStatement = co.prepareStatement(query)){
+    //         preparedStatement.setInt(1, id_ingredient);
+
+    //         preparedStatement.executeUpdate();
+    //         preparedStatement.close();
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         throw e;
+    //     }
+    // }
+    
 ///     liste de tous les ingredients
     public static List<Ingredient> getAll()throws Exception{
         Connection connection = null;
@@ -188,6 +329,7 @@ public class Ingredient {
 
             // je voulais pas utiliser le getById car je ne veux pas re-rentrer dans la base
                 Ingredient ingredient = new Ingredient(id_ingredient, name_ingredient, id_unit,stock, last_update);
+                ingredient.setPrice();
                 retour.add(ingredient);
             }
 
@@ -202,5 +344,5 @@ public class Ingredient {
         }
         return retour;
     }
-
+ 
 }

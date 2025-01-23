@@ -29,23 +29,28 @@ public class ProductController extends HttpServlet{
         String id_product = request.getParameter("id_product");
         String name = request.getParameter("name");
         String conservation_time_h = request.getParameter("conservation_time_h");
+        String price = request.getParameter("price");
 
         if (    
             null!=action && action.equals("insert") && 
             null!=name && !name.isEmpty() &&
-            null!=conservation_time_h && !conservation_time_h.isEmpty()){
+            null!=conservation_time_h && !conservation_time_h.isEmpty() &&
+            null!=price && !price.isEmpty() ){
                 // parse 
                 double conservation=Double.parseDouble(conservation_time_h);
+                double prix=Double.parseDouble(price);
                 // creation de l' objet
-                Product product = new Product(0, name, conservation);
                 Connection connection=null;
                 Connexion conn=null;
                 try {
+                    Product product = new Product(0, name, conservation,prix);
                     conn = new Connexion();
 
                     connection = conn.connectePostgres();
 
                     product.save(connection);
+
+                    product.savePrice(connection);
 
                 } catch (Exception e) {
 
@@ -65,22 +70,26 @@ public class ProductController extends HttpServlet{
             null!=action && action.equals("update") && 
             null!=id_product && !id_product.isEmpty() &&
             null!=name && !name.isEmpty() &&
-            null!=conservation_time_h && !conservation_time_h.isEmpty()){
+            null!=conservation_time_h && !conservation_time_h.isEmpty() &&
+            null!=price && !price.isEmpty() ){
                 // parse 
                 int id_prod=Integer.parseInt(id_product);
                 double conservation=Double.parseDouble(conservation_time_h);
+                double prix=Double.parseDouble(price);
+
                 // creation de l' objet
-                Product product = new Product(id_prod, name, conservation);
                 Connection connection=null;
                 Connexion conn=null;
                 try {
+                    Product product = new Product(id_prod, name, conservation,prix);
                     conn = new Connexion();
 
                     connection = conn.connectePostgres();
 
                     product.update(connection);
 
-                 
+                    product.savePrice(connection);
+
                 } catch (Exception e) {
                     e.printStackTrace();                    
                 } finally {
@@ -115,9 +124,9 @@ public class ProductController extends HttpServlet{
                 int id_prod=Integer.parseInt(id_product);
                 Product product = new Product();
                 product.getById(id_prod);
-                Connection connection = Connexion.connectePostgres();
-                product.delete(connection);
-                connection.close();
+                
+                product.delete();
+                
                 
             } catch (Exception e) {
                 e.printStackTrace();   

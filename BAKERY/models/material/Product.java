@@ -1,21 +1,31 @@
 package material;
+import connexion.Connexion;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import connexion.Connexion;
-
 public class Product {
-    private int id_product;
-    private String name_product;
-    private double conservation_time_h;
-
+    protected int id_product;
+    protected String name_product;
+    protected double conservation_time_h;
+    protected double price;
+    protected Category category;
     public Product(){
     }
-    public Product (int id_product,String name_product,double conservation_time_h){
+    public Product (int id_product,String name_product,double conservation_time_h) throws Exception{
         this.id_product=id_product;
         this.name_product=name_product;
         this.conservation_time_h=conservation_time_h;
+        this.price=0;
+       
+    }
+    public Product (int id_product,String name_product,double conservation_time_h,double price)throws Exception{
+        this.id_product=id_product;
+        this.name_product=name_product;
+        this.conservation_time_h=conservation_time_h;
+        this.price=price;        
+        
+        
     }
 
 ///     Getteur
@@ -28,6 +38,13 @@ public class Product {
     public double getConservatonTimeH(){
         return conservation_time_h;
     }
+    public double getPrice(){
+        return this.price;
+    }
+    public Category getCategory(){
+        return category ;
+    }
+  
 
     //      getteur by id
     public void getById(int id_product) throws Exception{
@@ -67,19 +84,97 @@ public class Product {
     public void setConservationTimeH(double conservation_time_h){
         this.conservation_time_h=conservation_time_h;
     }
+    public void setPrice(double price){
+        this.price=price;
+    }
 
+    public void setPrice() throws Exception{
+        Connection connection = null;
+        String query="SELECT * FROM bakery_product_prices WHERE id_product = ? order by date_time desc";
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = Connexion.connectePostgres();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setInt(1, id_product);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()){
+                setPrice(resultSet.getDouble("price"));
+            } else {
+                setPrice(0);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            if (null!=resultSet) resultSet.close();
+            if (null!=preparedStatement) preparedStatement.close();
+            if (null!=connection) connection.close();  
+        }
+    }
+    public void setCategories()throws Exception {
+        Connection connection = null;
+        String query="SELECT id_category FROM bakery_product_categories WHERE id_product = ?";
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = Connexion.connectePostgres();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setInt(1, id_product);
+            resultSet = preparedStatement.executeQuery();
+            
+            while (resultSet.next()) {
+                category = new Category();
+                category.getById(resultSet.getInt(1));
+                
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            if (null!=resultSet) resultSet.close();
+            if (null!=preparedStatement) preparedStatement.close();
+            if (null!=connection) connection.close();  
+        }
+    }
     
 ///     affichage
     public String line() {
-        String retour="\t<tr>\n";
+        String retour="";
 
         retour+="\t\t<td>"+name_product+"</td>\n";
         retour+="\t\t<td>"+conservation_time_h+"</td>\n";
-        retour+="\t\t<td><a href=\"Product?action=update&id_product="+id_product+"\">update<a> <a href=\"Product?action=delete&id_product="+id_product+"\">delete<a></td>\n";
-        retour+="\t</tr>\n";
+        retour+="\t\t<td>"+price+"</td>\n";
+
+        // retour+="\t\t<td><a href=\"Product?action=update&id_product="+id_product+"\">update<a> <a href=\"Product?action=delete&id_product="+id_product+"\">delete<a></td>\n";
+        // retour+="\t</tr>\n";
 
         return retour;   
     }
+    public String option(){
+        return "\t\t<option value=\""+id_product+"\">"+name_product+"</option>\n";
+    }
+//      setteur avec connection
+    public void setIdProduct()throws Exception{
+        Connection connection=null;
+        String query="SELECT max(id_product) as id_product FROM bakery_products";
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = Connexion.connectePostgres();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(query);
+            if (resultSet.next()) {
+                setIdProduct(resultSet.getInt(1));
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            if (null!=resultSet) resultSet.close();
+            if (null!=statement) statement.close();
+            if (null!=connection) connection.close(); 
+        }
+    }
+
 
 ///     insert
     public void save(Connection co)throws Exception{
@@ -89,6 +184,22 @@ public class Product {
 
             preparedStatement.setString(1, name_product);
             preparedStatement.setDouble(2, conservation_time_h);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+            setIdProduct();
+        } catch (Exception e ){
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    public void savePrice(Connection co )throws Exception{
+        String query = "INSERT INTO bakery_product_prices (id_product, price) VALUES (? , ?)";
+
+        try(PreparedStatement preparedStatement = co.prepareStatement(query)){
+
+            preparedStatement.setInt(1, id_product);
+            preparedStatement.setDouble(2, price);
 
             preparedStatement.executeUpdate();
             preparedStatement.close();
@@ -115,8 +226,41 @@ public class Product {
         }
     }
 ///     delete 
+    public void delete()throws Exception {
+        Connection connection = null;
+        try {
+            connection = Connexion.connectePostgres();
+            connection.setAutoCommit(false);
+
+            deletePrice(connection);
+            delete(connection);
+            connection.commit();
+        } catch (Exception e){
+            try {
+                connection.rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw ex;
+            }
+            throw e;
+        } finally {
+            if (null!=connection) connection.close();
+        }
+    }
     public void delete(Connection co)throws Exception{
         String query = "DELETE FROM bakery_products WHERE id_product = ?";
+        try (PreparedStatement preparedStatement = co.prepareStatement(query)){
+            preparedStatement.setInt(1, id_product);
+
+            preparedStatement.executeUpdate();
+            preparedStatement.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+    public void deletePrice(Connection co)throws Exception{
+        String query = "DELETE FROM bakery_product_prices WHERE id_product = ?";
         try (PreparedStatement preparedStatement = co.prepareStatement(query)){
             preparedStatement.setInt(1, id_product);
 
@@ -153,6 +297,8 @@ public class Product {
 
             
                 Product product = new Product(id_product, name_product, conservation_time_h);
+                product.setCategories();
+                product.setPrice();
                 retour.add(product);
             }
 
@@ -167,5 +313,12 @@ public class Product {
         }
         return retour;
     }
+
+    
+
+
+    /// Creation de nouvelle class recommended 
+    /// changement de nom de attribut
+    /// 
 
 }

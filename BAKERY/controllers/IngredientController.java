@@ -29,17 +29,20 @@ public class IngredientController extends HttpServlet{
         String name = request.getParameter("name");
         String unit = request.getParameter("unit");
         String stock = request.getParameter("stock");
+        String price = request.getParameter("price");
 
         if (    
             null!=action && action.equals("insert") && 
             null!=name && !name.isEmpty() &&
             null!=unit && !unit.isEmpty() &&
-            null!=stock && !stock.isEmpty()){
+            null!=stock && !stock.isEmpty() &&
+            null!=price && !price.isEmpty() ){
                 // parse 
                 int id_unit=Integer.parseInt(unit);
                 double stockage=Double.parseDouble(stock);
+                double prix=Double.parseDouble(price);
                 // creation de l' objet
-                Ingredient ingredient=new Ingredient(0, name, id_unit,stockage,null);
+                Ingredient ingredient=new Ingredient(0, name, id_unit,stockage,null,prix);
                 Connection connection=null;
                 Connexion conn=null;
                 try {
@@ -49,6 +52,7 @@ public class IngredientController extends HttpServlet{
 
                     ingredient.save(connection);
 
+                    ingredient.savePrice(connection);
                     
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -69,13 +73,15 @@ public class IngredientController extends HttpServlet{
             null!=id_ingredient && !id_ingredient.isEmpty() &&
             null!=name && !name.isEmpty() &&
             null!=unit && !unit.isEmpty() &&
-            null!=stock && !stock.isEmpty()){
+            null!=stock && !stock.isEmpty() &&
+            null!=price && !price.isEmpty() ){
                 // parse 
                 int id_ing=Integer.parseInt(id_ingredient);
                 int id_unit=Integer.parseInt(unit);
                 double stockage=Double.parseDouble(stock);
+                double prix=Double.parseDouble(price);
                 // creation de l' objet
-                Ingredient ingredient=new Ingredient(id_ing, name, id_unit,stockage,null);
+                Ingredient ingredient=new Ingredient(id_ing, name, id_unit,stockage,null,prix);
                 Connection connection=null;
                 Connexion conn=null;
                 try {
@@ -85,6 +91,7 @@ public class IngredientController extends HttpServlet{
 
                     ingredient.update(connection);
 
+                    ingredient.savePrice(connection);
                 } catch (Exception e) {
                     response.getWriter().print("<p>"+e.getMessage()+"</p>");
                     
@@ -129,7 +136,9 @@ public class IngredientController extends HttpServlet{
                 Ingredient ingredient = new Ingredient();
                 ingredient.getById(id_ing);
                 Connection connection = Connexion.connectePostgres();
+                ingredient.deletePrice(connection);
                 ingredient.delete(connection);
+
                 connection.close();
                 
             } catch (Exception e) {
@@ -138,6 +147,7 @@ public class IngredientController extends HttpServlet{
             }
             response.sendRedirect("Ingredient?action=liste");
         }
+        /// update
         else if (null != action && action.equals("update") && null !=id_ingredient && !id_ingredient.isEmpty()){
             RequestDispatcher dispat = request.getRequestDispatcher("/WEB-INF/views/updateIngredient.jsp");
             List<Unit> units = null;
